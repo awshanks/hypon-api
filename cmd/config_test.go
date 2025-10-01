@@ -50,7 +50,7 @@ func TestConfigViewOutput(t *testing.T) {
 
 	// Capture output
 	var buf bytes.Buffer
-	
+
 	// Create a new root command for testing to avoid side effects
 	testRootCmd := &cobra.Command{Use: "test"}
 	testConfigCmd := &cobra.Command{
@@ -62,7 +62,7 @@ func TestConfigViewOutput(t *testing.T) {
 		Short: "View current configuration",
 		Run:   configViewCmd.Run, // Use the actual implementation
 	}
-	
+
 	testRootCmd.AddCommand(testConfigCmd)
 	testConfigCmd.AddCommand(testConfigViewCmd)
 	testRootCmd.SetOut(&buf)
@@ -112,7 +112,7 @@ func TestConfigViewWithConfigValues(t *testing.T) {
 
 	// Capture output
 	var buf bytes.Buffer
-	
+
 	// Create a new root command for testing
 	testRootCmd := &cobra.Command{Use: "test"}
 	testConfigCmd := &cobra.Command{
@@ -124,7 +124,7 @@ func TestConfigViewWithConfigValues(t *testing.T) {
 		Short: "View current configuration",
 		Run:   configViewCmd.Run,
 	}
-	
+
 	testRootCmd.AddCommand(testConfigCmd)
 	testConfigCmd.AddCommand(testConfigViewCmd)
 	testRootCmd.SetOut(&buf)
@@ -167,7 +167,7 @@ func TestConfigViewWithEnvironmentVariables(t *testing.T) {
 
 	// Capture output
 	var buf bytes.Buffer
-	
+
 	// Create a new root command for testing
 	testRootCmd := &cobra.Command{Use: "test"}
 	testConfigCmd := &cobra.Command{
@@ -179,7 +179,7 @@ func TestConfigViewWithEnvironmentVariables(t *testing.T) {
 		Short: "View current configuration",
 		Run:   configViewCmd.Run,
 	}
-	
+
 	testRootCmd.AddCommand(testConfigCmd)
 	testConfigCmd.AddCommand(testConfigViewCmd)
 	testRootCmd.SetOut(&buf)
@@ -205,11 +205,11 @@ func TestGetConfigValueWithSource(t *testing.T) {
 	viper.Reset()
 
 	tests := []struct {
-		name          string
-		key           string
-		defaultValue  string
-		configValue   string
-		expected      string
+		name         string
+		key          string
+		defaultValue string
+		configValue  string
+		expected     string
 	}{
 		{
 			name:         "config value set",
@@ -240,7 +240,7 @@ func TestGetConfigValueWithSource(t *testing.T) {
 			if tt.configValue != "" {
 				viper.Set(tt.key, tt.configValue)
 			}
-			
+
 			result := getConfigValueWithSource(tt.key, tt.defaultValue)
 			if result != tt.expected {
 				t.Errorf("Expected '%s', got '%s'", tt.expected, result)
@@ -302,5 +302,75 @@ func TestMaskIfSet(t *testing.T) {
 				t.Errorf("Expected '%s', got '%s'", tt.expected, result)
 			}
 		})
+	}
+}
+
+func TestConfigClearCmd(t *testing.T) {
+	// Test that config clear command exists and has correct metadata
+	if configClearCmd.Use != "clear" {
+		t.Errorf("Expected config clear command Use to be 'clear', got '%s'", configClearCmd.Use)
+	}
+
+	if configClearCmd.Short == "" {
+		t.Error("Expected config clear command to have a Short description")
+	}
+
+	if configClearCmd.Long == "" {
+		t.Error("Expected config clear command to have a Long description")
+	}
+
+	if configClearCmd.RunE == nil {
+		t.Error("Expected config clear command to have a RunE function")
+	}
+}
+
+func TestConfigClearCmdFlags(t *testing.T) {
+	// Test that the force flag exists
+	forceFlag := configClearCmd.Flags().Lookup("force")
+	if forceFlag == nil {
+		t.Error("Expected config clear command to have a 'force' flag")
+	}
+
+	if forceFlag.Shorthand != "f" {
+		t.Errorf("Expected force flag shorthand to be 'f', got '%s'", forceFlag.Shorthand)
+	}
+}
+
+func TestClearConfigFileFunction(t *testing.T) {
+	// Create a temporary config file for testing
+	tmpDir := t.TempDir()
+	testConfigFile := tmpDir + "/test-config.yaml"
+
+	// Create test config content
+	configContent := `user:
+  name: "Test User"
+hypon:
+  api_url: "https://test.api.com"
+`
+
+	err := os.WriteFile(testConfigFile, []byte(configContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create test config file: %v", err)
+	}
+
+	// Test force clear (no confirmation needed)
+	err = clearConfigFile(testConfigFile, true)
+	if err != nil {
+		t.Errorf("clearConfigFile with force failed: %v", err)
+	}
+
+	// Verify file was deleted
+	if _, err := os.Stat(testConfigFile); !os.IsNotExist(err) {
+		t.Error("Expected config file to be deleted, but it still exists")
+	}
+}
+
+func TestClearConfigFileNonExistent(t *testing.T) {
+	// Test clearing a non-existent file
+	nonExistentFile := "/tmp/non-existent-config.yaml"
+
+	err := clearConfigFile(nonExistentFile, true)
+	if err != nil {
+		t.Errorf("clearConfigFile should handle non-existent files gracefully, got error: %v", err)
 	}
 }
