@@ -46,6 +46,7 @@ var configViewCmd = &cobra.Command{
 		fmt.Printf("  username: %s\n", getConfigValueWithSource("hypon.username", ""))
 		fmt.Printf("  password: %s\n", maskPassword(getConfigValueWithSource("hypon.password", "")))
 		fmt.Printf("  oem:      %s\n", getConfigValueWithSource("hypon.oem", ""))
+		fmt.Printf("  token:    %s\n", maskPassword(getConfigValueWithSource("hypon.token", "")))
 		fmt.Println()
 
 		// Display User settings
