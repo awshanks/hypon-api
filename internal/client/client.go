@@ -122,3 +122,13 @@ func (c *Client) GetPlantList(page, pageSize int) (*http.Response, error) {
 	endpoint := fmt.Sprintf("/v2/plant/list2?page=%d&page_size=%d&refresh=true", page, pageSize)
 	return c.Get(endpoint)
 }
+
+// GetPlantListMenu retrieves the plant list from the menu action endpoint
+func (c *Client) GetPlantListMenu() (*http.Response, error) {
+	return c.Get("/v2/auth/menu/actionList?menu_code=PlantList&refresh=true")
+}
+
+// SetToken sets the authentication token for the client
+func (c *Client) SetToken(token string) {
+	c.Token = token
+}
