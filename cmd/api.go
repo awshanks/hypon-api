@@ -155,10 +155,96 @@ var plantsCmd = &cobra.Command{
 	},
 }
 
+// plantListCmd represents the plant-list command
+var plantListCmd = &cobra.Command{
+	Use:   "plant-list",
+	Short: "Get paginated list of solar plants",
+	Long:  `Retrieve a paginated list of solar plants from the Hypon API using the plant list endpoint.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// Get configuration values
+		apiURL := viper.GetString("hypon.api_url")
+		if apiURL == "" {
+			apiURL = "https://api.hypon.cloud"
+		}
+
+		token := viper.GetString("hypon.token")
+
+		// Create client
+		client, err := client.NewClient(apiURL)
+		if err != nil {
+			return fmt.Errorf("failed to create client: %v", err)
+		}
+
+		// If we have a stored token, use it directly
+		if token != "" {
+			client.SetToken(token)
+		} else {
+			// Fall back to username/password authentication
+			username := viper.GetString("hypon.username")
+			if username == "" {
+				username = os.Getenv("HYPON_USER")
+			}
+
+			password := viper.GetString("hypon.password")
+			if password == "" {
+				password = os.Getenv("HYPON_PASS")
+			}
+
+			oem := viper.GetString("hypon.oem")
+
+			if username == "" || password == "" {
+				return fmt.Errorf("no stored token found and username/password are required. Run 'hypon-api auth login' first or set HYPON_USER and HYPON_PASS environment variables")
+			}
+
+			if err := client.Login(username, password, oem); err != nil {
+				return fmt.Errorf("login failed: %v", err)
+			}
+		}
+
+		// Get page and page size from flags
+		page, _ := cmd.Flags().GetInt("page")
+		pageSize, _ := cmd.Flags().GetInt("page-size")
+
+		// Get plant list
+		resp, err := client.GetPlantList(page, pageSize)
+		if err != nil {
+			return fmt.Errorf("failed to get plant list: %v", err)
+		}
+		defer resp.Body.Close()
+
+		// Read and display the response body
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read response body: %v", err)
+		}
+
+		// Try to pretty-print JSON if possible
+		var jsonData interface{}
+		if err := json.Unmarshal(body, &jsonData); err == nil {
+			prettyJSON, err := json.MarshalIndent(jsonData, "", "  ")
+			if err == nil {
+				fmt.Printf("Plant list retrieved successfully (page %d, size %d). Status: %s\n\n", page, pageSize, resp.Status)
+				fmt.Println(string(prettyJSON))
+				return nil
+			}
+		}
+
+		// Fallback: display raw response
+		fmt.Printf("Plant list retrieved successfully (page %d, size %d). Status: %s\n\n", page, pageSize, resp.Status)
+		fmt.Println(string(body))
+		return nil
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(apiCmd)
 	apiCmd.AddCommand(adminInfoCmd)
 	apiCmd.AddCommand(plantsCmd)
+	apiCmd.AddCommand(plantListCmd)
+
+	// Add flags for pagination
+	plantListCmd.Flags().Int("page", 1, "Page number (default: 1)")
+	plantListCmd.Flags().Int("page-size", 10, "Number of items per page (default: 10)")
 
 	// Here you will define your flags and configuration settings.
 
