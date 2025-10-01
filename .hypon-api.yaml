@@ -3,6 +3,6 @@ defaults:
 hypon:
     api_url: https://api.hypon.cloud
     oem: "y"
-    password: D3adtrigger!!
-    token: 00f9218e8dc7cf943244a654e45cb2d2
-    username: andrew.shanks@gmail.com
+    password:
+    token:
+    username:
