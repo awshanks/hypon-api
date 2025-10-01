@@ -1,18 +1,8 @@
-# Hypon API CLI Configuration File
-# Save this as ~/.hypon-api.yaml or specify with --config flag
-
-# User configuration
-user:
-  name: "Your Name Here"
-
-# Hypon API configuration
-hypon:
-  api_url: "https://api.hypon.cloud"
-  # Username and password can be set here or via environment variables
-  # username: "your-username"
-  # password: "your-password"
-  oem: ""
-
-# Default settings
 defaults:
-  page_size: 10
+    page_size: 10
+hypon:
+    api_url: https://api.hypon.cloud
+    oem: "y"
+    password:
+    token:
+    username:
